@@ -19,14 +19,15 @@ __all__ = [
     'PolyLine',
     'Polygon',
     'WSIAnnotation'
-    ]
+]
 
-from typing import Tuple, Union
-import shapely.geometry as shg
-import shapely.affinity as sha
-import geojson as gj
 from abc import ABC, abstractmethod
+from typing import Tuple, Union
+
+import geojson as gj
 import numpy as np
+import shapely.affinity as sha
+import shapely.geometry as shg
 
 
 ##-
@@ -148,7 +149,7 @@ class AnnotationObject(ABC):
     def xy(self) -> np.array:
         """Return the xy-coordinates as a numpy.array [n,2]"""
         x, y = self.geom.coords.xy
-        return np.array((x,y)).T
+        return np.array((x, y)).T
 
     @property
     def size(self) -> int:
@@ -173,7 +174,6 @@ class AnnotationObject(ABC):
         self._annotation_type = d["annotation_type"]
         self._name = d["name"]
         self._in_group = d["in_group"]
-
 
     def asGeoJSON(self) -> dict:
         """Return a dictionary compatible with GeoJSON specifications."""
@@ -206,6 +206,8 @@ class AnnotationObject(ABC):
     def type(self):
         """Return the annotation type as a string."""
         return self._annotation_type
+
+
 ##-
 
 
@@ -216,8 +218,8 @@ class WSIAnnotation(object):
     per pixel - mpp).
     """
 
-    def __init__(self, name: str, image_shape: Union[dict, Tuple[int,int]],
-                 mpp: float, group_list: list[str]=[]) -> None:
+    def __init__(self, name: str, image_shape: Union[dict, Tuple[int, int]],
+                 mpp: float, group_list: list[str] = []) -> None:
         """Initialize an Annotation for a slide.
 
         :param name: (str) name of the annotation
@@ -236,7 +238,7 @@ class WSIAnnotation(object):
         # The annotations are stored in a dict(), indexed by group names.
         # If an annotation does not belong to any group, it is assigned to
         # "NO_GROUP" entry.
-        self._annots = {'NO_GROUP': list()}   # dict with annotation objects
+        self._annots = {'NO_GROUP': list()}  # dict with annotation objects
         if len(group_list) > 0:
             # initialize the groups, aside from NO_GROUP
             for g in group_list:
@@ -274,10 +276,10 @@ class WSIAnnotation(object):
 
     def resize(self, factor: float) -> None:
         self._mpp /= factor  # mpp varies inverse proportional with scaling of the objects
-        self._image_shape = {'width': self._image_shape['width']*factor,
-                             'height': self._image_shape['height']*factor}
+        self._image_shape = {'width': self._image_shape['width'] * factor,
+                             'height': self._image_shape['height'] * factor}
 
-        for g in list(self._annots):   # for all groups
+        for g in list(self._annots):  # for all groups
             for a in self._annots[g]:  # and all annotations in a group
                 a.resize(factor)
 
@@ -332,7 +334,6 @@ class WSIAnnotation(object):
 
         return gj.FeatureCollection(all_annots)
 
-
     def fromGeoJSON(self, d: dict) -> None:
         """Initialize an annotation from a dictionary compatible with GeoJSON specifications."""
         if d["type"].lower() != "featurecollection":
@@ -378,6 +379,7 @@ class WSIAnnotation(object):
         else:
             raise RuntimeError("unknown annotation type: " + annot_type)
         return obj
+
 
 ##-
 
@@ -429,6 +431,7 @@ class Point(AnnotationObject):
 
         return
 
+
 ##-
 
 
@@ -457,7 +460,7 @@ class PointSet(AnnotationObject):
 
     @staticmethod
     def empty_object():
-        p = PointSet([[0,0]])
+        p = PointSet([[0, 0]])
         return p
 
     @property
@@ -475,7 +478,7 @@ class PointSet(AnnotationObject):
     @property
     def xy(self) -> np.array:
         """Return the xy-coordinates as a numpy.array [n,2]"""
-        
+
         return np.array((self.x, self.y)).T
 
     @property
@@ -493,7 +496,7 @@ class PointSet(AnnotationObject):
 
     def fromGeoJSON(self, d: dict) -> None:
         """Initialize the object from a dictionary compatible with GeoJSON specifications."""
-        if d["geometry"]["type"].lower() not in ["pointset","multipoint"]:
+        if d["geometry"]["type"].lower() not in ["pointset", "multipoint"]:
             raise RuntimeError("Need a MultiPoint feature! Got: " + str(d))
 
         super().fromGeoJSON(d)
@@ -501,10 +504,12 @@ class PointSet(AnnotationObject):
 
         return
 
+
 ##-
 
 class PolyLine(AnnotationObject):
     """PolyLine: polygonal line (a sequence of segments)"""
+
     def __init__(self, coords, name=None, in_group="NO_GROUP"):
         """Initialize a POLYLINE object.
 
@@ -525,7 +530,7 @@ class PolyLine(AnnotationObject):
 
     @staticmethod
     def empty_object():
-        p = PolyLine([[0,0],[1,1]])
+        p = PolyLine([[0, 0], [1, 1]])
         return p
 
     @property
@@ -545,7 +550,7 @@ class PolyLine(AnnotationObject):
     @property
     def xy(self) -> np.array:
         """Return the xy-coordinates as a numpy.array [n,2]"""
-        
+
         return np.array(self.geom.coords.xy).T
 
     @property
@@ -577,6 +582,8 @@ class PolyLine(AnnotationObject):
         self._annotation_type = "POLYLINE"
 
         return
+
+
 ##-
 
 
@@ -628,7 +635,7 @@ class Polygon(AnnotationObject):
     def xy(self) -> np.array:
         """Return the xy-coordinates of the vertices of the EXTERIOR contour,
         as a numpy.array [n,2]"""
-        
+
         return np.array(self.geom.exterior.coords.xy).T
 
     def fromdict(self, d: dict) -> None:

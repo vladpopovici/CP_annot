@@ -1,4 +1,3 @@
-
 #############################################################################
 # Copyright Vlad Popovici <popovici@bioxlab.org>
 #
@@ -9,17 +8,18 @@ __author__ = "Vlad Popovici <popovici@bioxlab.org>"
 
 """Import annotations from ASAP (XML) files. See also https://github.com/computationalpathologygroup/ASAP"""
 
-import xmltodict
-import cp_annot as ann
 from pathlib import Path
+
+import xmltodict
+
+import cp_annot as ann
 
 
 def annotation_from_ASAP(
-    infile: str, 
-    wsi_extent: tuple[int,int],
-    magnification: float
-    ) -> ann.WSIAnnotation:
-    
+        infile: str,
+        wsi_extent: tuple[int, int],
+        magnification: float
+) -> ann.WSIAnnotation:
     infile = Path(infile)
     with open(infile, 'r') as input:
         annot_dict = xmltodict.parse(input.read(), xml_attribs=True)
@@ -32,7 +32,7 @@ def annotation_from_ASAP(
         raise RuntimeError('Syntax error in ASAP XML file')
 
     try:
-        group_list = [ g['@Name'] for g in annot_dict['AnnotationGroups']['Group'] ]
+        group_list = [g['@Name'] for g in annot_dict['AnnotationGroups']['Group']]
     except KeyError:
         group_list = []
 
@@ -41,7 +41,7 @@ def annotation_from_ASAP(
     wsi_annotation = ann.WSIAnnotation(infile.name, wsi_extent, magnification, group_list)
     for annot in annot_list:
         if annot['@Type'].lower() == 'dot':
-            coords = [float(annot["Coordinates"]["Coordinate"]["@X"]), float(annot["Coordinates"]["Coordinate"]["@Y"]) ]
+            coords = [float(annot["Coordinates"]["Coordinate"]["@X"]), float(annot["Coordinates"]["Coordinate"]["@Y"])]
             obj = ann.Point(coords, annot['@Name'], in_group=annot["@PartOfGroup"])
         elif annot['@Type'].lower() == 'pointset':
             coords = [(float(o["@X"]), float(o["@Y"])) for o in annot["Coordinates"]["Coordinate"]]
